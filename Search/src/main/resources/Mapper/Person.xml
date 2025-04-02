@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.Pets.Search.mapper.Person">
+<select id="cp_word" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+select id, nickname, profile_img as img from userinfo
+where nickname like CONCAT('%' ,#{startkor} ,'%') or LOWER(nickname) like CONCAT('%' ,LOWER(#{eng}) ,'%') or
+UPPER(nickname) like CONCAT('%' ,UPPER(#{eng}) ,'%');
+</select>
+
+<select id="cp_word_eng_second" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+select id, nickname, profile_img as img from userinfo
+where nickname like CONCAT('%' ,#{startkor} ,'%') or LOWER(nickname) like CONCAT('%' ,LOWER(#{eng}) ,'%') or
+UPPER(nickname) like CONCAT('%' ,UPPER(#{eng}) ,'%') or LOWER(nickname) like CONCAT('%' ,LOWER(#{second_eng}) ,'%') or
+UPPER(nickname) like CONCAT('%' ,UPPER(#{second_eng}) ,'%')
+limit 10;
+</select>
+<select id="cpword_cho_second" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+select id, nickname, profile_img as img from userinfo
+where nickname >= #{startkor} and  #{endkor} >= nickname  or 
+LOWER(nickname) like CONCAT('%' ,LOWER(#{eng}) ,'%') or
+UPPER(nickname) like CONCAT('%' ,UPPER(#{eng}) ,'%') or LOWER(nickname) like CONCAT('%' ,LOWER(#{second_eng}) ,'%') or
+UPPER(nickname) like CONCAT('%' ,UPPER(#{second_eng}) ,'%')
+limit 10;
+</select>
+<select id="cpword_cho" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+select id, nickname, profile_img as img from userinfo
+where nickname >= #{startkor} and  #{endkor} >= nickname or
+LOWER(nickname) like CONCAT('%' ,LOWER(#{eng}) ,'%') or
+UPPER(nickname) like CONCAT('%' ,UPPER(#{eng}) ,'%')
+limit 10;
+</select>
+
+<select id="onlychosung" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+select id, nickname, profile_img as img from 
+userinfo u join usernickpart ni on u.connectid = ni.connectid
+where ni.consonant like CONCAT('%' ,#{startkor} ,'%') or  
+LOWER(nickname) like CONCAT('%' ,LOWER(#{eng}) ,'%') or
+UPPER(nickname) like CONCAT('%' ,UPPER(#{eng}) ,'%')
+limit 10;
+</select>
+
+<select id="onlychosung_second" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+select id, nickname, profile_img as img from 
+userinfo u join usernickpart ni on u.connectid = ni.connectid
+where ni.consonant like CONCAT('%' ,#{startkor} ,'%') or  
+LOWER(u.nickname) like CONCAT('%' ,LOWER(#{eng}) ,'%') or
+UPPER(u.nickname) like CONCAT('%' ,UPPER(#{eng}) ,'%') or 
+LOWER(u.nickname) like CONCAT('%' ,LOWER(#{second_eng}) ,'%') or
+UPPER(u.nickname) like CONCAT('%' ,UPPER(#{second_eng}) ,'%')
+limit 10;
+</select>
+
+<select id="onlyjung"  parameterType="java.util.HashMap" resultType="java.util.HashMap">
+select id, nickname, profile_img as img from 
+userinfo u join usernickpart ni on u.connectid = ni.connectid
+where ni.vowels like CONCAT('%' ,#{startkor} ,'%') or 
+LOWER(u.nickname) like CONCAT('%' ,LOWER(#{eng}) ,'%') or
+UPPER(u.nickname) like CONCAT('%' ,UPPER(#{eng}) ,'%') 
+limit 10;
+</select>
+
+<select id="onlyOne" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+select id, nickname, profile_img as img from 
+userinfo where ni.consant like concat('%' ,#{startkor} ,'%') or 
+LOWER(u.nickname) like CONCAT('%' ,LOWER(#{eng}) ,'%') or
+UPPER(u.nickname) like CONCAT('%' ,UPPER(#{eng}) ,'%') 
+limit 10;
+</select>
+
+<select id="SearchInitial" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+select id, nickname, profile_img as img from 
+userinfo where ni.initial like concat('%' ,#{startkor} ,'%') or 
+LOWER(u.nickname) like CONCAT('%' ,LOWER(#{eng}) ,'%') or
+UPPER(u.nickname) like CONCAT('%' ,UPPER(#{eng}) ,'%') 
+limit 10;
+</select>
+
+<select id="MatList_initial" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+SELECT u2.nickname, u2.profile_img AS img, r.relationid AS id , u2.connectid ,pt.initial 
+FROM userinfo u1
+JOIN relationuser r ON u1.connectid = r.connetid
+JOIN userinfo u2 ON u2.id = r.relationid 
+join usernickpart pt on pt.connectid = u2.connectid
+WHERE r.connetid = (SELECT connectid FROM userinfo WHERE id = #{Id})
+and pt.initial like concat ('%', #{Nickname},'%') or r.relationid=#{Nickname};
+</select>
+
+<select id="MatList_chosung" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+SELECT u2.nickname, u2.profile_img AS img, r.relationid AS id , u2.connectid ,pt.initial 
+FROM userinfo u1
+JOIN relationuser r ON u1.connectid = r.connetid
+JOIN userinfo u2 ON u2.id = r.relationid 
+join usernickpart pt on pt.connectid = u2.connectid
+WHERE r.connetid = (SELECT connectid FROM userinfo WHERE id = #{Id})
+and pt.consonant like concat ('%', #{Nickname},'%') or r.relationid=#{Nickname};
+</select>
+
+</mapper>
