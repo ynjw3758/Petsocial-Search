@@ -1,0 +1,1635 @@
+package com.Pets.Search.service;
+
+import java.util.ArrayList;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.Pets.Search.dto.PersonInfo;
+import com.Pets.Search.mapper.Person;
+import com.vane.hanguleditor.HangulEditor;
+
+
+@Service
+public class Person_Service {
+	
+	/** 초성 - 가(ㄱ), 날(ㄴ), 닭(ㄷ) */
+	private static char[] arrChoSung = { 
+	    0x3131, // ㄱ
+	    0x3132, // ㄲ
+	    0x3134, // ㄴ
+	    0x3137, // ㄷ
+	    0x3138, // ㄸ
+	    0x3139, // ㄹ
+	    0x3141, // ㅁ
+	    0x3142, // ㅂ
+	    0x3143, // ㅃ
+	    0x3145, // ㅅ
+	    0x3146, // ㅆ
+	    0x3147, // ㅇ
+	    0x3148, // ㅈ
+	    0x3149, // ㅉ
+	    0x314a, // ㅊ
+	    0x314b, // ㅋ
+	    0x314c, // ㅌ
+	    0x314d, // ㅍ
+	    0x314e  // ㅎ
+	};
+	/* --- 중성 편하게 보기 위해서 
+	private static char[] arrJungSung1 = {
+		    0x314F,  // ㅏ
+		    0x3150,  // ㅐ
+		    0x3151,  // ㅑ
+		    0x3152,  // ㅒ
+		    0x3153,  // ㅓ
+		    0x3154,  // ㅔ
+		    0x3155,  // ㅕ
+		    0x3156,  // ㅖ
+		    0x3157,  // ㅗ
+		    0x3158,  // ㅘ
+		    0x3159,  // ㅙ
+		    0x315A,  // ㅚ
+		    0x315B,  // ㅛ
+		    0x315C,  // ㅜ
+		    0x315D,  // ㅝ
+		    0x315E,  // ㅞ
+		    0x315F,  // ㅟ
+		    0x3160,  // ㅠ
+		    0x3161,  // ㅡ
+		    0x3162,  // ㅢ
+		    0x3163   // ㅣ
+		};
+	*/
+	/** 중성 - 가(ㅏ), 야(ㅑ), 뺨(ㅑ) */
+	private static char[] arrJungSung = { 0x314f, 0x3150, 0x3151, 0x3152, 0x3153, 0x3154, 0x3155, 0x3156, 0x3157,
+			0x3158, 0x3159, 0x315a, 0x315b, 0x315c, 0x315d, 0x315e, 0x315f, 0x3160, 0x3161, 0x3162, 0x3163 };
+	/** 종성 - 가(없음), 갈(ㄹ) 천(ㄴ) */
+	private static char[] arrJongSung = { 0x0000, 0x3131, 0x3132, 0x3133, 0x3134, 0x3135, 0x3136, 0x3137, 0x3139,
+			0x313a, 0x313b, 0x313c, 0x313d, 0x313e, 0x313f, 0x3140, 0x3141, 0x3142, 0x3144, 0x3145, 0x3146, 0x3147,
+			0x3148, 0x314a, 0x314b, 0x314c, 0x314d, 0x314e };
+	
+	
+	
+	private static String[] arrChoSungEng = { 
+		    "k", "K", "n", "d", "D", "r", "m", "b", "B", 
+		    "s", "S", "a", "j", "J", "ch", "c", "t", "p", "h" 
+		};
+	
+	/** 중성 - 가(ㅏ), 야(ㅑ), 뺨(ㅑ) */
+	private static String[] arrJungSungEng = {
+		    "a",    // ㅏ
+		    "ae",   // ㅐ
+		    "ya",   // ㅑ
+		    "yae",  // ㅒ
+		    "eo",   // ㅓ
+		    "e",    // ㅔ
+		    "yeo",  // ㅕ
+		    "ye",   // ㅖ
+		    "o",    // ㅗ
+		    "wa",   // ㅘ
+		    "wae",  // ㅙ
+		    "oe",   // ㅚ
+		    "yo",   // ㅛ
+		    "u",    // ㅜ
+		    "wo",   // ㅝ
+		    "we",   // ㅞ
+		    "wi",   // ㅟ
+		    "yu",   // ㅠ
+		    "eu",   // ㅡ
+		    "ui",   // ㅢ
+		    "i"     // ㅣ
+		};
+	/** 종성 - 가(없음), 갈(ㄹ) 천(ㄴ) */
+	private static String[] arrJongSungEng = { "", "k", "K", "ks", "n", "nj", "nh", "d", "l", "lg", "lm", "lb", "ls",
+			"lt", "lp", "lh", "m", "b", "bs", "s", "ss", "ng", "j", "ch", "c", "t", "p", "h" };
+	
+	private static final Map<String, String> VOWEL_MAP = new HashMap<>();
+	
+	 static {//중성 	 	
+	        VOWEL_MAP.put("wae", "ㅙ");
+	        VOWEL_MAP.put("wo", "ㅝ");
+	        VOWEL_MAP.put("wi", "ㅟ");
+	        VOWEL_MAP.put("wa", "ㅘ");
+	        VOWEL_MAP.put("oe", "ㅚ");
+	        VOWEL_MAP.put("yo", "ㅛ");
+	        VOWEL_MAP.put("yu", "ㅠ");
+	        VOWEL_MAP.put("ae", "ㅐ");
+	        VOWEL_MAP.put("eo", "ㅓ");
+	        VOWEL_MAP.put("yeo", "ㅕ");
+	        VOWEL_MAP.put("we", "ㅞ");
+	        VOWEL_MAP.put("eu", "ㅡ");
+	        VOWEL_MAP.put("ui", "ㅢ");
+	        VOWEL_MAP.put("a", "ㅏ");
+	        VOWEL_MAP.put("e", "ㅔ");
+	        VOWEL_MAP.put("o", "ㅗ");
+	        VOWEL_MAP.put("u", "ㅜ");
+	        VOWEL_MAP.put("i", "ㅣ");
+	        VOWEL_MAP.put("ya", "ㅑ");
+	    }
+private static final Map<String, String> CONSONANT_MAP = new HashMap<>();	 
+	 static { // 종성(받침)
+		    CONSONANT_MAP.put("", "");       // 받침 없음
+		    CONSONANT_MAP.put("k", "ㄱ");
+		    CONSONANT_MAP.put("kk", "ㄲ");
+		    CONSONANT_MAP.put("ks", "ㄳ");
+		    CONSONANT_MAP.put("n", "ㄴ");
+		    CONSONANT_MAP.put("nj", "ㄵ");
+		    CONSONANT_MAP.put("nh", "ㄶ");
+		    CONSONANT_MAP.put("t", "ㄷ");
+		    CONSONANT_MAP.put("l", "ㄹ");
+		    CONSONANT_MAP.put("lk", "ㄺ");
+		    CONSONANT_MAP.put("lm", "ㄻ");
+		    CONSONANT_MAP.put("lb", "ㄼ");
+		    CONSONANT_MAP.put("ls", "ㄽ");
+		    CONSONANT_MAP.put("lt", "ㄾ");
+		    CONSONANT_MAP.put("lp", "ㄿ");
+		    CONSONANT_MAP.put("lh", "ㅀ");
+		    CONSONANT_MAP.put("m", "ㅁ");
+		    CONSONANT_MAP.put("b", "ㅂ");
+		    CONSONANT_MAP.put("bs", "ㅄ");
+		    CONSONANT_MAP.put("s", "ㅅ");
+		    CONSONANT_MAP.put("ss", "ㅆ");
+		    CONSONANT_MAP.put("ng", "ㅇ");
+		    CONSONANT_MAP.put("j", "ㅈ");
+		    CONSONANT_MAP.put("ch", "ㅊ");
+		    CONSONANT_MAP.put("c", "ㅋ");  // 'c'를 'ㅋ'로 처리
+		    CONSONANT_MAP.put("t", "ㅌ");
+		    CONSONANT_MAP.put("p", "ㅍ");
+		    CONSONANT_MAP.put("h", "ㅎ");
+		}
+	 
+	 Map<Character, Character> alphabetToCho = Map.ofEntries(
+			    Map.entry('r', 'ㄱ'), Map.entry('R', 'ㄱ'),
+			    Map.entry('s', 'ㄴ'), Map.entry('S', 'ㄴ'),
+			    Map.entry('e', 'ㄷ'), Map.entry('E', 'ㄷ'),
+			    Map.entry('f', 'ㄹ'), Map.entry('F', 'ㄹ'),
+			    Map.entry('a', 'ㅁ'), Map.entry('A', 'ㅁ'),
+			    Map.entry('q', 'ㅂ'), Map.entry('Q', 'ㅂ'),
+			    Map.entry('t', 'ㅅ'), Map.entry('T', 'ㅅ'),
+			    Map.entry('d', 'ㅇ'), Map.entry('D', 'ㅇ'),
+			    Map.entry('w', 'ㅈ'), Map.entry('W', 'ㅈ'),
+			    Map.entry('c', 'ㅊ'), Map.entry('C', 'ㅊ'),
+			    Map.entry('z', 'ㅋ'), Map.entry('Z', 'ㅋ'),
+			    Map.entry('x', 'ㅌ'), Map.entry('X', 'ㅌ'),
+			    Map.entry('v', 'ㅍ'), Map.entry('V', 'ㅍ'),
+			    Map.entry('g', 'ㅎ'), Map.entry('G', 'ㅎ'),
+			    Map.entry('h', 'ㅎ'), Map.entry('H', 'ㅎ') // 여기가 핵심
+			);
+
+
+
+
+	
+	private Logger logger = LoggerFactory.getLogger(this.getClass());
+	
+	@Autowired
+	private Person person_mapper;
+	
+	public int findjong(char word) {
+		
+		int values=0;
+		for(int i=0; i<arrJongSung.length; i++ ) {
+			if(word == arrJongSung[i]) {
+				values=i;
+				break;
+			}
+			else continue;
+		}
+		
+		return values;
+		
+	}
+	
+	public int findjung(char word) {
+		
+		int values=0;
+		for(int i=0; i<arrJungSung.length; i++ ) {
+			if(word == arrJungSung[i]) {
+				values=i;
+				break;
+			}
+			else continue;
+		}
+		
+		return values;
+		
+	}
+	
+	
+	
+	public String MoToeng(char word) {
+		
+		String values="";
+		for(int i=0; i<arrJungSung.length; i++ ) {
+			if(word == arrJungSung[i]) {
+				values=arrJungSungEng[i];
+				break;
+			}
+			else continue;
+		}
+		
+		return values;
+		
+	}
+	
+    public int JaToeng(char word) {
+		int values=0;
+		for(int i=0; i<arrChoSung.length; i++ ) {
+			if(word == arrChoSung[i]) {
+				values=i;
+				break;
+			}
+			else continue;
+		}
+		
+		return values;
+    }
+	public String HangleToEng(String word) {
+		String values="";
+
+		return values;
+	}
+	
+	public int isjong(char word){
+		int values=0;
+		
+		for(int i=0; i<arrJongSung.length; i++ ) {
+			if(word == arrJongSung[i]) {
+				values=i;
+				break;
+			}
+			else continue;
+		}
+		return values;
+	}
+	
+	public Map<String, Object>Search_MatFollower(String nickname, String Id){
+		Map<String ,Object> data = new HashMap<String, Object>();
+		Map<String, Object> insert_data = new HashMap<String ,Object>();
+		List<PersonInfo> person_list = new ArrayList<PersonInfo>();
+		String kor="";
+		boolean ischo=false, isword=false;
+		 logger.info("닉네임 검색 :"  + nickname);
+		 
+		 boolean isOnlyH = HangulEditor.isInOnlyHangul(nickname);
+		 if(isOnlyH) {
+			 logger.info("한글");
+			 for(int i=0; i< nickname.length(); i++) {
+				 if(HangulEditor.isConsonant(nickname.charAt(i))) {
+					 ischo =true;
+					 kor+=nickname.charAt(i);
+				 }
+				 else if(!HangulEditor.isVowels(nickname.charAt(i)) && 
+	        			   !HangulEditor.isConsonant(nickname.charAt(i))) {
+					 isword= true;
+	        		   char chars = (char) (nickname.charAt(i) - 0xAC00);
+	        		   if (chars >= 0 && chars <= 11172) {
+
+	        		   int chosung= chars / (21 * 28);
+	   				   int jungsung = chars % (21 * 28) / 28;
+	   				   int jongsung = chars % (21 * 28) % 28;
+	   				   
+	   				   if(jongsung != 0x0000) {
+	   					 kor+= ""+arrChoSung[chosung] +arrJungSung[jungsung] + arrJongSung[jongsung];
+	   					 logger.info("완벽 :" + kor);
+	   				   }
+	   				   else {
+	   					kor+= ""+arrChoSung[chosung] +arrJungSung[jungsung];
+	   					logger.info("종성없음 :" + kor);
+	   				   }
+	   				   
+	   				  
+	   				   
+	        		   }
+				 }
+			 }
+			 
+			 if(ischo == true && isword == false) {//초성만
+				 insert_data.put("Nickname", kor);
+				 insert_data.put("Id", Id);
+				 
+				 person_list = person_mapper.MatList_chosung(insert_data);
+				 
+				 if(person_list.size() ==0) {
+		 	    		logger.info("없다");
+		 	    		data.put("code", 204);
+		 	    		data.put("msg", "empty");
+		 	    		data.put("data", "null");
+		 	    		
+		 	    	}
+		 	    	else {
+		 	    		logger.info("있다");
+		 	    		data.put("code", 200);
+		 	    		data.put("msg", "success");
+		 	    		data.put("data", person_list);
+		 	    	}
+				 
+				 return data;
+				 
+			 }else {//그외 나머지는 쿼리는 같기 때문에
+				 logger.info("뭐여");
+				 insert_data.put("Nickname", kor);
+				 insert_data.put("Id", Id);
+				 person_list = person_mapper.MatList_initial(insert_data);
+				 
+				 if(person_list.size() ==0) {
+		 	    		logger.info("없다");
+		 	    		data.put("code", 204);
+		 	    		data.put("msg", "empty");
+		 	    		data.put("data", "null");
+		 	    		
+		 	    	}
+		 	    	else {
+		 	    		logger.info("있다");
+		 	    		data.put("code", 200);
+		 	    		data.put("msg", "success");
+		 	    		data.put("data", person_list);
+		 	    	}
+			 }
+       
+			 
+			 
+		 }
+		 else {
+			 logger.info("영어");
+				insert_data.put("Id", Id);
+				insert_data.put("Nickname", nickname);
+			 person_list = person_mapper.MatList_initial(insert_data);
+    	    	if(person_list.size() ==0) {
+ 	    		logger.info("없다");
+ 	    		data.put("code", 204);
+ 	    		data.put("msg", "empty");
+ 	    		data.put("data", "null");
+ 	    		
+ 	    	}
+ 	    	else {
+ 	    		logger.info("있다");
+ 	    		data.put("code", 200);
+ 	    		data.put("msg", "success");
+ 	    		data.put("data", person_list);
+ 	    	}
+			 
+		 }
+		 
+		
+		return data;
+		
+	}
+	//사람 검색
+	public Map<String, Object>Search_Person(String Search){
+		Map<String, Object> data = new HashMap<String, Object>();
+		Map<String, Object> Search_word = new HashMap<String, Object>();
+		List<PersonInfo> person_list = new ArrayList<PersonInfo>();
+		boolean isOnlyH = HangulEditor.isInOnlyHangul(Search);
+		String hantoeng="", eng="" , second_eng="" ,kor_total="", startkor="" ,endkor="";
+		boolean isCpword =false, isConso=false , isVowe =false;
+        char sum_Han, end_sum;
+	    if(isOnlyH== true) {
+           for(int i=0; i< Search.length(); i++) {
+              if(Search.length() >= 3) {
+            	  if(i !=Search.length()-1) {
+             	     if(HangulEditor.isConsonant(Search.charAt(i)) &&
+                 	        HangulEditor.isVowels(Search.charAt(i+1))) {//처음 문자가 자음만 있고 그 다음문자가 모음만 있는 경우 합치는 로직
+                 	    	 isCpword=true;
+                 		   int cho=0, jung=0 ,jong=0;
+                 		   for(int ch=0; ch< arrChoSung.length; ch++) {
+                 				if(Search.charAt(i) == arrChoSung[ch]) {
+                 					if(Search.charAt(i) !='ㄱ' ) {
+                 						if(second_eng.equals("")) {
+                         					cho=ch;
+                         					eng+=arrChoSungEng[ch];
+                 						}
+                 						else {
+                         					cho=ch;
+                         					eng+=arrChoSungEng[ch];
+                         					second_eng+=arrChoSungEng[ch];
+                 						}
+
+                 					break;
+                 					}
+                 					else {
+                     					cho=ch;
+                     					eng+=arrChoSungEng[ch];
+                     					second_eng ="g";
+                 					}
+                 				}
+                 				else continue;
+                 		   }
+                 		   for(int ju=0; ju< arrJungSung.length; ju++) {
+                 				if(Search.charAt(i+1) == arrJungSung[ju]) {
+                 					if(second_eng =="") {
+                 					jung=ju;
+                 					eng+=arrJungSungEng[ju];
+                 					break;
+                 					}
+                 					else {
+                     					jung=ju;
+                     					eng+=arrJungSungEng[ju];
+                     					second_eng+=arrJungSungEng[ju];
+                     					break;
+                 					}
+                 				}
+                 				else continue;
+                 		   }
+                 		   if(i +1 == Search.length()-1) {
+                 			   logger.info("길이가 받침까지 있을 수 없다");
+                     		   sum_Han=(char) ((cho * 21 + jung)*28 +0 +0xAC00); 
+                     		   startkor+=Character.toString(sum_Han);
+                     		   break;
+                 		   }
+                 		   else {
+                     		   String jung_check="";
+                     		   jong =isjong(Search.charAt(i+2)); 
+                     		   if(i+2 == Search.length()-1) {//마지막이니 다음 것을 비교할게 없다
+                           		   if(second_eng =="") eng+=arrJongSungEng[jong];
+                         		   else {
+                         			   eng+=arrJongSungEng[jong];
+                         			   second_eng+=arrJongSungEng[jong];
+                         		   }
+                         		   sum_Han=(char) ((cho * 21 + jung)*28 +jong +0xAC00); 
+                         		   startkor+=Character.toString(sum_Han);
+                         		   break;
+                     		   }
+                     		   else{
+                     			   jung_check =MoToeng(Search.charAt(i+3)); 
+                         		   if(jung_check.equals("")) {
+                         			   logger.info("받침이 존재");
+                             		   if(second_eng =="") eng+=arrJongSungEng[jong];
+                             		   else {
+                             			   eng+=arrJongSungEng[jong];
+                             			   second_eng+=arrJongSungEng[jong];
+                             		   }
+
+                             		   sum_Han=(char) ((cho * 21 + jung)*28 +jong +0xAC00); 
+                             		   startkor+=Character.toString(sum_Han);
+                                 	   i+=2;
+                                 	continue;
+                         		   }
+                         		   else if(!jung_check.equals("")) {
+                         			   logger.info("두 단어로 이루어짐");
+                             		   sum_Han=(char) ((cho * 21 + jung)*28 +0 +0xAC00); 
+                             		   startkor+=Character.toString(sum_Han);
+                                 	   i+=1;
+                                 	   continue;
+                         			   
+                         		   }
+                     		   }
+                     		  
+                 		   }
+
+                 	     }
+            	  }
+
+        	     
+        	     //위에 조건이 맞지 않으면 한개의 index마다 값을 만든다.()
+          	   if(HangulEditor.isConsonant(Search.charAt(i))) {
+        		   logger.info("자음 : ㄱ,ㄴ,ㄷ...." + Search.charAt(i));
+        		   isConso = true;
+        		   if(isCpword == false) {
+        		  if(Search.charAt(i) != 'ㄱ') {
+        			  if(Search.charAt(i) == 'ㅋ') {
+          				 eng +=JaToeng(Search.charAt(i));
+          				second_eng+="k";
+          			  }
+          			  else {
+
+          				  if(Search.charAt(i) =='ㄵ') { //특이 케이스 
+          					  logger.info("ㄵ 검색");
+          					eng+="nj";
+          				  }
+          				  else if(Search.charAt(i) =='ㄶ') {
+          					eng+="nh";
+          				  }
+          				  else if(Search.charAt(i) =='ㄺ') {
+          					eng+="lk";
+          					  
+          				  }
+          				  else if(Search.charAt(i) =='ㄻ') {
+          					  
+          					eng+="lm";
+          				  }
+          				  else if(Search.charAt(i) =='ㄼ') {
+          					  
+          					eng+="lp";
+          				  }
+          				  else if(Search.charAt(i) =='ㄽ') {
+          					  
+          					eng+="ls";
+          				  }
+          				  else if(Search.charAt(i) =='ㄾ') {
+          					  
+          					eng+="lh";
+          				  }
+          				  else if(Search.charAt(i) =='ㅄ') {
+          					  
+          					eng+="ps";
+          				  }
+          				  else{
+          					  logger.info("일반 자음 검색");
+               				 eng +=JaToeng(Search.charAt(i));
+              				 logger.info("결과 :" + eng);
+          				  }
+
+          			  }
+        		  }
+        		  else {
+        			  eng +=JaToeng(Search.charAt(i));
+        			  second_eng+="g";
+        		  }
+        		  startkor+=Search.charAt(i);
+        		   }
+        		   else {
+        			   int cho=0;
+            		   for(int ch=0; ch< arrChoSung.length; ch++) {
+           				if(Search.charAt(i) == arrChoSung[ch]) {
+           					if(Search.charAt(i) !='ㄱ' ) {
+           						if(Search.charAt(i) !='ㅋ' ) {
+                   					cho=ch;
+                   					eng+=arrChoSungEng[ch];
+           						}
+           						else{
+                   					cho=ch;
+                   					eng+=arrChoSungEng[ch];
+                   					second_eng+='k';
+           						}
+
+           					break;
+           					}
+           					else {
+               					cho=ch;
+               					eng+=arrChoSungEng[ch];
+               					second_eng ="g";
+           					}
+           				}
+           				else continue;
+           		   }
+            		   
+            		   sum_Han=(char) ((cho * 21 + 0)*28 +0 +0xAC00); 
+            		   end_sum =(char) ((cho * 21 + 20)*28 +27 +0xAC00); 
+            		   startkor+=Character.toString(sum_Han);
+            		   endkor+=Character.toString(end_sum);
+        		   }
+
+       			logger.info("한글 결과 :" + startkor);
+       			logger.info("마지막 한글 결과 :" + endkor);
+        		   
+        	   }
+        	   else if(HangulEditor.isVowels(Search.charAt(i))) {
+        		   isVowe= true;
+        		   logger.info("모음 : ㅏ,ㅑ,ㅐ,ㅛ,ㅓ.....");
+        		   if(isCpword == false && isConso == false) {
+            		   eng +=MoToeng(Search.charAt(i));
+            		   startkor+=Search.charAt(i);
+            		   logger.info("모음 영어 알파벳 :" + eng);
+            		   logger.info("모음 글자 :" + startkor);
+        		   }
+        	   }
+        	   else if(!HangulEditor.isVowels(Search.charAt(i)) && 
+        			   !HangulEditor.isConsonant(Search.charAt(i))){
+        		   isCpword=true;
+        		   logger.info("완벽한 문자 :" + isCpword);
+        		   if(endkor.equals("")) {
+        			   logger.info("지금까지는 완벽한 문자만 존재");
+        			   startkor +=Search.charAt(i); 
+        		   }
+        		   else {
+        			   logger.info("앞 문자에서 자음 or 모음이 존재");
+        			   startkor +=Search.charAt(i); 
+        			   endkor+=Search.charAt(i); 
+        		   }
+        		   
+        		   logger.info("완벽 :" + startkor);
+        		   char chars = (char) (Search.charAt(i) - 0xAC00);
+        		   if (chars >= 0 && chars <= 11172) {
+
+        		   int chosung= chars / (21 * 28);
+   				int jungsung = chars % (21 * 28) / 28;
+   				int jongsung = chars % (21 * 28) % 28;
+				   if(chosung !=0) {
+   					   if(second_eng =="") {
+   						   if(chosung == 11 && jungsung == 0) {
+   							 eng = eng + arrChoSungEng[chosung];
+   							 
+   						   }
+   						   else {
+   							 eng = eng + arrChoSungEng[chosung] + arrJungSungEng[jungsung];
+   						   }
+   					   }
+   					   else {
+   	   					eng = eng + arrChoSungEng[chosung] + arrJungSungEng[jungsung];
+   	   					second_eng = second_eng + arrChoSungEng[chosung] + arrJungSungEng[jungsung];
+   					   }
+	   				   }
+	   				   else {
+	   					eng = eng + arrChoSungEng[chosung] + arrJungSungEng[jungsung];
+	   					second_eng = second_eng + 'g' + arrJungSungEng[jungsung];
+	   				   }
+	   				      /* 자음분리 */
+	   				      if (jongsung != 0x0000) {
+	   				    	  logger.info("second :" + second_eng);
+	   				    	  if(second_eng =="") {
+	   					    /* A-3. 종성이 존재할경우 result에 담는다 */
+	   					    eng = eng + arrJongSungEng[jongsung];
+	   				    	  }
+	   				    	  else {
+	   		   					eng = eng + arrJongSungEng[jongsung];
+	   		   					second_eng = second_eng  + arrJongSungEng[jongsung];
+	   				    	  }
+	   				        }
+        		   }
+        		   logger.info("영어 변환 :" + eng);
+        		   
+        	     }
+        	   }	
+        	   else {
+
+        		   
+        	   if(HangulEditor.isConsonant(Search.charAt(i))) {
+    		   logger.info("자음 : " + isCpword);
+        		   isConso = true;
+        		   if(isCpword == false) {
+        		  if(Search.charAt(i) != 'ㄱ') {
+        			  if(Search.charAt(i) == 'ㅋ') {
+          				 eng +=JaToeng(Search.charAt(i));
+          				second_eng+="k";
+          			  }
+          			  else {
+          				  if(Search.charAt(i) =='ㄵ') { //특이 케이스 
+          					  logger.info("ㄵ 검색");
+          					eng+="nj";
+          				  }
+          				  else if(Search.charAt(i) =='ㄶ') {
+          					eng+="nh";
+          				  }
+          				  else if(Search.charAt(i) =='ㄺ') {
+          					eng+="lk";
+          					  
+          				  }
+          				  else if(Search.charAt(i) =='ㄻ') {
+          					  
+          					eng+="lm";
+          				  }
+          				  else if(Search.charAt(i) =='ㄼ') {
+          					  
+          					eng+="lp";
+          				  }
+          				  else if(Search.charAt(i) =='ㄽ') {
+          					  
+          					eng+="ls";
+          				  }
+          				  else if(Search.charAt(i) =='ㄾ') {
+          					  
+          					eng+="lh";
+          				  }
+          				  else if(Search.charAt(i) =='ㅄ') {
+          					  
+          					eng+="ps";
+          				  }
+          				  else{
+               				 eng +=JaToeng(Search.charAt(i));
+          				  }
+          			  }
+        		  }
+        		  else {
+        			  eng +=JaToeng(Search.charAt(i));
+        			  second_eng+="g";
+        		  }
+        		  startkor+=Search.charAt(i);
+        		   }
+        		   else {
+        			   int cho=0;
+            		   for(int ch=0; ch< arrChoSung.length; ch++) {
+           				if(Search.charAt(i) == arrChoSung[ch]) {
+           					if(Search.charAt(i) !='ㄱ' ) {
+           						if(Search.charAt(i) !='ㅋ' ) {
+                   					cho=ch;
+                   					eng+=arrChoSungEng[ch];
+           						}
+           						else{
+                   					cho=ch;
+                   					eng+=arrChoSungEng[ch];
+                   					second_eng+='k';
+           						}
+
+           					break;
+           					}
+           					else {
+               					cho=ch;
+               					eng+=arrChoSungEng[ch];
+               					second_eng +="g";
+           					}
+           				}
+           				else continue;
+           		   }
+            		  
+            		   sum_Han=(char) ((cho * 21 + 0)*28 +0 +0xAC00); 
+            		   end_sum =(char) ((cho * 21 + 20)*28 +27 +0xAC00); 
+            		   startkor+=Character.toString(sum_Han);
+            		   String cpword =startkor.substring(0, startkor.length()-1); 
+            		   endkor+=cpword+Character.toString(end_sum);
+        		   }
+        	   }
+        	   else if(HangulEditor.isVowels(Search.charAt(i))) {
+        		   isVowe=true;
+        		   logger.info("모음 : ㅏ,ㅑ,ㅐ,ㅛ,ㅓ.....");
+        		   if(isCpword == false && isConso == false) {//오직 모음만 존재할 때
+            		   eng +=MoToeng(Search.charAt(i));
+            		   startkor+=Search.charAt(i);
+
+        		   }
+        		   else {//단어+모음인 경우
+        			   logger.info("단어 + 모음");
+        			   if(second_eng.equals("")) {
+        				   char st_add_word =(char) ((0 * 21 + 0)*28 +0 +0xAC00); 
+        				   char end_add_word =(char) ((0 * 21 + 20)*28 +27 +0xAC00);
+        				  startkor+= Character.toString(st_add_word);
+        				  String start_sub = startkor.substring(0, startkor.length()-1);
+        				  endkor+=start_sub+Character.toString(end_add_word);
+        			   }
+        			   else {
+        				   char st_add_word =(char) ((0 * 21 + 0)*28 +0 +0xAC00); 
+        				   char end_add_word =(char) ((0 * 21 + 20)*28 +27 +0xAC00);
+        				  startkor+= Character.toString(st_add_word);
+        				  String start_sub = startkor.substring(0, startkor.length()-1);
+        				  endkor+=start_sub+Character.toString(end_add_word);
+        			   }
+        			   
+        		   }
+
+        	   }
+        	   else if(!HangulEditor.isVowels(Search.charAt(i)) && 
+        			   !HangulEditor.isConsonant(Search.charAt(i))){
+        		   isCpword= true;
+        		   if(endkor.equals("")) {
+        			   startkor +=Search.charAt(i); 
+        		   }
+        		   else {
+        			   startkor +=Search.charAt(i); 
+        			   endkor+=Search.charAt(i); 
+        		   }
+        		   char chars = (char) (Search.charAt(i) - 0xAC00);
+        		   if (chars >= 0 && chars <= 11172) {
+
+        		   int chosung= chars / (21 * 28);
+   				   int jungsung = chars % (21 * 28) / 28;
+   				   int jongsung = chars % (21 * 28) % 28;
+   				   logger.info("초성 인덱스 : " + chosung);
+   				logger.info("중성 인덱스 : " + jungsung);
+   				char istest = arrJungSung[jungsung];
+   				logger.info("왜 :" + istest);
+   				   
+   				   if(chosung !=0) {
+   					   
+   					   if(second_eng =="") {
+   						   if(chosung == 11 && jungsung == 0) {
+   							 eng = eng + arrChoSungEng[chosung];
+   							 
+   						   }
+   						   else {
+   							 eng = eng + arrChoSungEng[chosung] + arrJungSungEng[jungsung];
+   						   }
+   		   				  
+   					   }
+   					   else {
+   	   					eng = eng + arrChoSungEng[chosung] + arrJungSungEng[jungsung];
+   	   					second_eng = second_eng + arrChoSungEng[chosung] + arrJungSungEng[jungsung];
+   					   }
+   					   
+
+   				   }
+   				   else {
+   					eng = eng + arrChoSungEng[chosung] + arrJungSungEng[jungsung];
+   					second_eng = second_eng + 'g' + arrJungSungEng[jungsung];
+   				   }
+   				      /* 자음분리 */
+   				      if (jongsung != 0x0000) {
+   				    	  if(second_eng =="") {
+   					    /* A-3. 종성이 존재할경우 result에 담는다 */
+   					    eng = eng + arrJongSungEng[jongsung];
+   				    	  }
+   				    	  else {
+   		   					eng = eng + arrJongSungEng[jongsung];
+   		   					second_eng = second_eng  + arrJongSungEng[jongsung];
+   				    	  }
+   				        }
+        		   }
+        		   logger.info("영어 변환 :" + eng);
+        		   
+        	   }
+        	   else if(HangulEditor.isConsonant(Search.charAt(i)) &&
+         	        HangulEditor.isVowels(Search.charAt(i+1))) {
+      	    	isCpword=true;
+     		   int cho=0, jung=0 ,jong=0;
+     		   for(int ch=0; ch< arrChoSung.length; ch++) {
+     				if(Search.charAt(i) == arrChoSung[ch]) {
+     					if(Search.charAt(i) !='ㄱ' ) {
+     						if(second_eng.equals("")) {
+             					cho=ch;
+             					eng+=arrChoSungEng[ch];
+     						}
+     						else {
+             					cho=ch;
+             					eng+=arrChoSungEng[ch];
+             					second_eng+=arrChoSungEng[ch];
+     						}
+
+     					break;
+     					}
+     					else {
+         					cho=ch;
+         					eng+=arrChoSungEng[ch];
+         					second_eng ="g";
+     					}
+     				}
+     				else continue;
+     		   }
+     		   for(int ju=0; ju< arrJungSung.length; ju++) {
+     				if(Search.charAt(i+1) == arrJungSung[ju]) {
+     					if(second_eng =="") {
+     					jung=ju;
+     					eng+=arrJungSungEng[ju];
+     					break;
+     					}
+     					else {
+         					jung=ju;
+         					eng+=arrJungSungEng[ju];
+         					second_eng+=arrJungSungEng[ju];
+         					break;
+     					}
+     				}
+     				else continue;
+     		   }
+    		   if(i +1 == Search.length()-1) {
+        		   sum_Han=(char) ((cho * 21 + jung)*28 +0 +0xAC00); 
+        		   startkor+=Character.toString(sum_Han);
+        		   logger.info("단어:" + startkor);
+        		   break;
+    		   }
+      	     }
+        	   }
+           }
+           if(endkor =="" && isConso == false && isVowe == false) {
+        	   if(second_eng.equals("")) {
+            	   Search_word.put("startkor",startkor);
+            	   Search_word.put("eng", eng);     
+            	   person_list= person_mapper.cp_word(Search_word);
+            	   
+            	   
+       	    	if(person_list.size() ==0) {
+    	    		data.put("code", 200);
+    	    		data.put("msg", "empty");
+    	    		data.put("data", "null");
+    	    		
+    	    		return data;
+    	    		
+    	    	}
+    	    	else {
+    	    		data.put("code", 200);
+    	    		data.put("msg", "success");
+    	    		data.put("data", person_list);
+    	    		return data;
+    	    	}
+            	   
+        	   }
+        	   else {
+        		  
+            	   Search_word.put("startkor",startkor);
+            	   Search_word.put("eng", eng);
+            	   Search_word.put("second_eng", second_eng);
+            	   
+            	   
+            	   person_list =person_mapper.cp_word_eng_second(Search_word);
+          	    	if(person_list.size() ==0) {
+        	    		logger.info("없다");
+        	    		data.put("code", 200);
+        	    		data.put("msg", "empty");
+        	    		data.put("data", "null");
+        	    		
+        	    		return data;
+        	    		
+        	    	}
+        	    	else {
+        	    		logger.info("있다");
+        	    		data.put("code", 200);
+        	    		data.put("msg", "success");
+        	    		data.put("data", person_list);
+        	    		return data;
+        	    	}
+            	   
+        	   }
+        	   
+           }
+           else {
+        	   if(isCpword == false && isConso == true && isVowe== false) {
+        		   
+        		   
+        		   if(second_eng.equals("")) {
+                	   Search_word.put("startkor",startkor);
+                	   Search_word.put("eng", eng);
+                	   person_list = person_mapper.onlychosung(Search_word);
+            	   }
+            	   else {
+                	   Search_word.put("startkor",startkor);
+                	   Search_word.put("eng", eng);
+                	   Search_word.put("second_eng", second_eng);
+                	   person_list = person_mapper.onlychosung_second(Search_word);
+            	   }
+        		   
+       	    	if(person_list.size() ==0) {
+    	    		logger.info("없다");
+    	    		data.put("code", 200);
+    	    		data.put("msg", "empty");
+    	    		data.put("data", "null");
+    	    		
+    	    	}
+    	    	else {
+    	    		logger.info("있다");
+    	    		data.put("code", 200);
+    	    		data.put("msg", "success");
+    	    		data.put("data", person_list);
+    	    	}
+       	    	
+       	    	return data;
+        	   }
+        	   else if(isCpword == false && isConso == false && isVowe== true){
+
+        		   Search_word.put("startkor",startkor);
+        		   Search_word.put("eng", eng);
+        		   person_list =person_mapper.onlyjung(Search_word);
+       	    	if(person_list.size() ==0) {
+    	    		data.put("code", 200);
+    	    		data.put("msg", "empty");
+    	    		data.put("data", "null");
+    	    		
+    	    	}
+    	    	else {
+    	    		data.put("code", 200);
+    	    		data.put("msg", "success");
+    	    		data.put("data", person_list);
+    	    	}
+       	    	
+       	    	return data;
+
+        		   
+        	   }
+        	   
+        	   else if(isCpword == true && isConso == true && isVowe== false) {
+        		   logger.info("단어+초성이 섞인 경우");
+        		   if(second_eng.equals("")) {
+                	   Search_word.put("startkor",startkor);
+                	   Search_word.put("endkor",endkor);
+                	   Search_word.put("eng", eng);
+                	   person_list = person_mapper.cpword_cho(Search_word);
+            	   }
+            	   else {
+                	   Search_word.put("startkor",startkor);
+                	   Search_word.put("endkor",endkor);
+                	   Search_word.put("eng", eng);
+                	   Search_word.put("second_eng", second_eng);
+                	   person_list = person_mapper.cpword_cho_second(Search_word);
+            	   }
+        		   
+        	   }
+        	   else if(isCpword == true && isConso == false && isVowe== true) {
+        		   logger.info("단어+중성이 섞인 경우");
+        		   if(second_eng.equals("")) {
+                	   Search_word.put("startkor",startkor);
+                	   Search_word.put("endkor",endkor);
+                	   Search_word.put("eng", eng);
+                	   person_list = person_mapper.cpword_cho(Search_word);
+            	   }
+            	   else {
+                	   Search_word.put("startkor",startkor);
+                	   Search_word.put("endkor",endkor);
+                	   Search_word.put("eng", eng);
+                	   Search_word.put("second_eng", second_eng);
+                	   person_list = person_mapper.cpword_cho_second(Search_word);
+            	   }
+        	   }
+           }
+	    	
+	    	if(person_list.size() ==0) {
+	    		logger.info("없다");
+	    		data.put("code", 200);
+	    		data.put("msg", "empty");
+	    		data.put("data", "null");	    		
+	    	}
+	    	else {
+	    		logger.info("있다");
+	    		data.put("code", 200);
+	    		data.put("msg", "success");
+	    		data.put("data", person_list);
+	    	}
+	    }
+	    else {
+	    	logger.info("다른 언어존재");
+	    	int cho=0 , jung=0,jong=0;
+	    	String Eng="", st_kor="" ,temp_kor="";
+	    	Map<String, Object> exist_cho= new HashMap<String, Object>();
+	    	Map<String, Object> exist_jung= new HashMap<String, Object>();
+	    	Map<String, Object> exist_jong= new HashMap<String, Object>();
+	    	StringBuilder result = new StringBuilder();
+	    	String[] origin;
+	    	origin = Search.split("");
+	        boolean skip_cho=false;
+	    	for(int E= 0; E < origin.length; E++) {
+	    		logger.info("E :" + E);
+	    		logger.info("영어 입력 : " + origin[E]);
+		    		if(origin[E].equals("g")) {
+		    			exist_cho.put("index", 0);
+		    			exist_cho.put("isfind", true);
+		    		}
+		    		else if(origin[E].equals("y") || origin[E].equals("Y")) {
+		    			exist_cho.put("index", 11);
+		    			exist_cho.put("isfind", true);
+		    		}
+		    		else {
+			    		
+			    		if(!skip_cho) {
+			    			exist_cho = EngToCho(origin[E]);
+			    			
+			    		}
+			    		logger.info("초성 검색 : " + exist_cho);
+		    		}
+
+	    			if(E < origin.length-1 && exist_cho.get("isfind").equals(true)) E+=1; //다음 단어찾기위해 E값 증가
+	    			if(E == origin.length-1 && origin.length ==1) {
+	    				logger.info("한 글자인 경우");
+	    				cho=(int) exist_cho.get("index"); 
+	    				startkor+=arrChoSung[cho];
+	    				Eng+=origin[E];
+	    				Search_word.put("startkor", startkor);
+	    				Search_word.put("eng", Eng);
+	    				person_list = person_mapper.onlychosung(Search_word);
+	    				logger.info("조회 결과 :" + person_list);
+	    				
+	    		    	if(person_list.size() ==0) {
+	    		    		logger.info("없다");
+	    		    		data.put("code", 200);
+	    		    		data.put("msg", "empty");
+	    		    		data.put("data", "null");	    		
+	    		    	}
+	    		    	else {
+	    		    		logger.info("있다");
+	    		    		data.put("code", 200);
+	    		    		data.put("msg", "success");
+	    		    		data.put("data", person_list);
+	    		    	}
+	    		    	
+	    		    	return data;
+	    				
+	    			}
+	    			if(E > 0) {
+	    			if(origin[E-1].equals(origin[E]) && exist_cho.get("isfind").equals(true)) {
+	    				logger.info("같은 글자가 반복되는것은 루프전체를 돌지말고 초성 루프에서만 동자");
+	    				
+	    				int cnt=1 ,second=0;
+	    				boolean isfinish=false;
+	    				cho=(int) exist_cho.get("index"); 
+	    				exist_cho = EngToCho(origin[E]);
+	    				second = (int) exist_cho.get("index"); 
+	    				String Repeats ="";
+	    				
+    					if(cnt ==1) startkor+= "" + arrChoSung[cho] +arrChoSung[second];
+	    				while(!isfinish) {
+	    					logger.info("같은 문자들 있는지 확인 찾는 방법은 바로 옆에를 시작으로 돌며 바로 옆에 다른 문자가 있으면 그 즉시 while문은 종료");
+	    					
+	    					if(origin[E] == origin[E+1]) {
+	    						logger.info("옆에 같은 값이 있다");
+	    						
+	    						cnt++;
+	    					}
+	    					else {
+	    						isfinish= true;
+	    					}
+	    				}
+	    				exist_cho = EngToCho(origin[E]);
+	    				cho=(int) exist_cho.get("index"); 
+	    				Repeats =Character.toString(arrChoSung[cho]);
+	    				startkor +=Repeats.repeat(cnt);
+	    				Eng+=origin[E].repeat(cnt);
+	    				E+=cnt;
+	    				if(E < origin.length -1) continue;
+	    				else {
+   						 Map<String, Object> Search_Input = new HashMap<String, Object>();
+   						 List<PersonInfo> Person = new ArrayList<PersonInfo>();
+   						Search_Input.put("startkor", startkor);
+   						Search_Input.put("eng", Eng);
+   						Person = person_mapper.onlychosung(Search_Input);
+   						
+	    		    	if(Person.size() ==0) {
+	    		    		logger.info("없다");
+	    		    		data.put("code", 200);
+	    		    		data.put("msg", "empty");
+	    		    		data.put("data", "null");	    		
+	    		    	}
+	    		    	else {
+	    		    		logger.info("있다");
+	    		    		data.put("code", 200);
+	    		    		data.put("msg", "success");
+	    		    		data.put("data", Person);
+	    		    	}
+	    		    	
+	    		    	return data;
+	    				}
+	    					
+	    			}
+	    			}
+	    			
+	    			int matchLength = 0;
+   				    boolean check = false;
+	    			 if (E + 2 < origin.length && matchLength == 0) {//길이가 3이상 
+	    				 exist_jung = Spetial_JungCheck(Search.substring(E, E + 3));
+	    				 logger.info("3가지 중성 조합 : " + exist_jung);
+	    				 
+	    				   check =(boolean) exist_jung.get("isfind");
+	    		            if(check) matchLength = (int) exist_jung.get("extend");
+	    		            
+	    		        }
+	    			 
+	    			 if (matchLength == 0 && E + 1 < origin.length) {
+	    				 exist_jung = Spetial_JungCheck(Search.substring(E, E + 2));
+	    				 logger.info("결과 :" +exist_jung );
+	    				 logger.info("matchLength :" +matchLength );
+	    				   check =(boolean) exist_jung.get("isfind");
+	    				   if(check)  matchLength = (int) exist_jung.get("extend");
+	    		        }
+	    			 else if(matchLength == 0 && E< origin.length) {
+	    				 
+	    				 logger.info("총 길이가 2글자인 경우 :" +E);
+	    				 exist_jung = Spetial_JungCheck(Search.substring(E));
+	    				 logger.info("결과 :" +exist_jung );
+	    				 logger.info("matchLength :" +matchLength );
+	    				 check =(boolean)exist_jung.get("isfind"); 
+	    				 if(check) matchLength = (int) exist_jung.get("extend");
+	    				 else {//다음 글자가 없기 때문에 여기서 쿼리 조회까지 처리 해야 한다.
+	    					 Map<String, Object> second_cho= new HashMap<String, Object>();
+	    					 logger.info("다음 인덱스는 없다");
+	    					 if(origin[E].equals("g")) {
+	    						 second_cho.put("isfind", true);
+	    						 second_cho.put("index", 0);
+	    					 }
+	    					 else {
+	    						 second_cho = EngToCho(origin[E]);
+	    					 }
+	    					 
+	    					
+	    					 boolean cho_check=(boolean) second_cho.get("isfind"); 
+	    					 if(cho_check) {
+	    						 logger.info("마지막 글짜 초성으로 확인");
+	    						 int first=(int) exist_cho.get("index");
+	    						 int second =(int) second_cho.get("index");  
+	    						 startkor+="" +arrChoSung[first]+arrChoSung[second];
+	    						 Eng+= origin;
+	    						 Map<String, Object> Search_Input = new HashMap<String, Object>();
+	    						 List<PersonInfo> Person = new ArrayList<PersonInfo>();
+	    						 Search_Input.put("startkor", startkor);
+	    						 Search_Input.put("eng", Eng);
+	    						 Person = person_mapper.onlychosung(Search_Input);
+	    						 logger.info("초성만 검색 : " + Person);
+	    						 
+	    		    		    	if(Person.size() ==0) {
+	    		    		    		logger.info("없다");
+	    		    		    		data.put("code", 200);
+	    		    		    		data.put("msg", "empty");
+	    		    		    		data.put("data", "null");	    		
+	    		    		    	}
+	    		    		    	else {
+	    		    		    		logger.info("있다");
+	    		    		    		data.put("code", 200);
+	    		    		    		data.put("msg", "success");
+	    		    		    		data.put("data", Person);
+	    		    		    	}
+	    		    		    	
+	    		    		    	return data;
+ 
+	    					 }
+	    				 }
+	    			 }
+
+	    			 E += matchLength; // 2
+	    		        if(origin.length-1 > E-1) {//중성 값을 찾은 경우 2
+	    		        	logger.info("마지막 받침을 찾자");
+	    		        	int match_conso=0;
+	    		        	 int start_index=E;
+	    		        	 logger.info("시작 인덱스 : " + start_index);
+	    		        	 
+	    		        	 if(start_index == origin.length-1) {
+	    		        		 logger.info("마지막 1문자만 존재 ");
+	    		        		 if(origin[E].equals("g")) {
+	    		        			 exist_jong.put("isfind", true);
+	    		        			 exist_jong.put("index", 1);
+	    		        		 }
+	    		        		 else {
+	    		        			 exist_jong = spetial_jongCheck(Search.substring(start_index));
+	    		        		 }
+	    		        		 
+		    		        	 check =(boolean) exist_jong.get("isfind");
+		    		        	 if(check) match_conso = (int) exist_jong.get("extend");
+		    		        	 
+		    		        	 boolean ischosung=false;
+		    		        	 ischosung =(boolean) exist_cho.get("isfind");
+		    		        	 if(ischosung) {
+		    		        		 logger.info("초성 존재");
+		    		        		 List<PersonInfo> Person = new ArrayList<PersonInfo>();
+		    		        		 Map<String, Object> Search_Input = new HashMap<String, Object>();
+		    		        	       cho=(int) exist_cho.get("index"); 
+		    		        	       jung =(int) exist_jung.get("index"); 
+		    		        	       jong = (int) exist_jong.get("index");
+		    		        	       logger.info("초성 :" + cho);
+		    		        	       logger.info("중성 :" + jung);
+		    		        		   sum_Han=(char) ((cho * 21 + jung)*28 +jong +0xAC00); 
+		    		        		   startkor+=Character.toString(sum_Han);
+		    		        		   logger.info("한글 변환 :" + startkor);
+		    		        		   Eng += origin;
+		    		        		   Search_Input.put("startkor", Search_Input);
+		    		        		   Search_Input.put("eng", Eng);
+		    		        		   
+		    		        		   Person = person_mapper.cp_word(Search_Input);
+		    		        		   logger.info("완벽한 단어 검색 : "+ Person);
+			    						 if(Person.size() ==0) {
+			    		    		    		logger.info("없다");
+			    		    		    		data.put("code", 200);
+			    		    		    		data.put("msg", "empty");
+			    		    		    		data.put("data", "null");	    		
+			    		    		    	}
+			    		    		    	else {
+			    		    		    		logger.info("있다");
+			    		    		    		data.put("code", 200);
+			    		    		    		data.put("msg", "success");
+			    		    		    		data.put("data", Person);
+			    		    		    	}
+			    		    		    	
+			    		    		    	return data;
+		    		        		   
+		    		        	 }
+		    		        	 else{
+		    		        		 logger.info("초성 없다");
+		    		        	       jung =(int) exist_jung.get("index"); 
+		    		        	       jong = (int) exist_jong.get("index");
+		    		        	       if(jong > 0) {
+		    		        	    	   logger.info("맏침 존재");
+		    		        	    	   startkor+=""+arrJungSung[jung]+arrJongSung[jong]; //초성으로 찾아야 한다.
+		    		        	    	   Eng+=origin;
+		  	    						 Map<String, Object> Search_Input = new HashMap<String, Object>();
+			    						 List<PersonInfo> Person = new ArrayList<PersonInfo>();
+			    						 Search_Input.put("startkor", startkor);
+			    						 Search_Input.put("eng", Eng);
+			    						 Person = person_mapper.SearchInitial(Search_Input);
+			    						 
+			    						 if(Person.size() ==0) {
+			    		    		    		logger.info("없다");
+			    		    		    		data.put("code", 200);
+			    		    		    		data.put("msg", "empty");
+			    		    		    		data.put("data", "null");	    		
+			    		    		    	}
+			    		    		    	else {
+			    		    		    		logger.info("있다");
+			    		    		    		data.put("code", 200);
+			    		    		    		data.put("msg", "success");
+			    		    		    		data.put("data", Person);
+			    		    		    	}
+			    		    		    	
+			    		    		    	return data;
+			    						 
+		    		        	       }
+		    		        	       else {
+		    		        	    	   startkor+=""+arrJungSung[jung]; //묵음만 존재
+		    		        	    	   Eng+=origin;
+		  	    						 Map<String, Object> Search_Input = new HashMap<String, Object>();
+			    						 List<PersonInfo> Person = new ArrayList<PersonInfo>();
+			    						 Search_Input.put("startkor", startkor);
+			    						 Search_Input.put("eng", Eng);
+			    						 Person =person_mapper.onlyjung(Search_Input);
+			    						 
+			    						 if(Person.size() ==0) {
+			    		    		    		logger.info("없다");
+			    		    		    		data.put("code", 200);
+			    		    		    		data.put("msg", "empty");
+			    		    		    		data.put("data", "null");	    		
+			    		    		    	}
+			    		    		    	else {
+			    		    		    		logger.info("있다");
+			    		    		    		data.put("code", 200);
+			    		    		    		data.put("msg", "success");
+			    		    		    		data.put("data", Person);
+			    		    		    	}
+			    		    		    	
+			    		    		    	return data;
+			    						 
+		    		        	    	   
+		    		        	       }		    		   
+		    		        	 }
+
+	    		        	 }
+	    		        	 else{
+	    		        		 logger.info("다음 단어들 많음");
+	    		        		 Map<String ,Object> currnet= new HashMap<String, Object>();
+	    		        		 Map<String ,Object> next =new HashMap<String, Object>();
+	    		        		 currnet= EngToCho(origin[start_index]);
+	    		        		 next = EngToCho(origin[start_index+1]);
+	    		        		 boolean cu =false, ne= false;
+	    		        		 cu =(boolean) currnet.get("isfind"); 
+	    		        		 ne= (boolean) next.get("isfind");
+	    		        		if(exist_cho.get("isfind").equals(true) && exist_jung.get("isfind").equals(true)) { 
+	    		        		 if(cu && ne) { //지금 다음도 모두 초성일 경우 받침 사용 가능
+		    		        		 exist_jong = spetial_jongCheck(Search.substring(start_index , start_index+2));
+			    		        	 check =(boolean) exist_jong.get("isfind");
+			    		        	 if(check) {
+			    		        		 match_conso = (int) exist_jong.get("extend");
+			    		        		 boolean ischosung=false;
+				    		        	 ischosung =(boolean) exist_cho.get("isfind");
+				    		        	 if(ischosung) {
+				    		        		 logger.info("초성 존재");
+				    		        	       cho=(int) exist_cho.get("index"); 
+				    		        	       jung =(int) exist_jung.get("index"); 
+				    		        	       jong = (int) exist_jong.get("index");
+				    		        		   sum_Han=(char) ((cho * 21 + jung)*28 +jong +0xAC00); 
+				    		        		   startkor+=Character.toString(sum_Han);
+				    		        		   logger.info("한글 변환 :" + startkor);
+				    		        	 }
+				    		        	 else{
+				    		        		 logger.info("초성 없다");
+				    		        	       jung =(int) exist_jung.get("index"); 
+				    		        	       jong = (int) exist_jong.get("index");
+				    		        		 
+				    		        		 startkor+=arrJungSung[jung]+arrJongSung[jong];
+				    		        		 
+				    		        	 }
+			    		        	 }
+			    		        	 else continue;
+	    		        		 }
+	    		        		 else if(cu && !ne) { // 현재 인덱스가 초성인데 다음 인덱스 값이 초성이 아닌경우 현재 인덱스 값을 초성값을 추출하여 다음 인덱스로 넘어가는 일 진행
+	    		        			 logger.info("다음 초성을 사용해야 한다");
+
+			    		        		 boolean ischosung=false;
+				    		        	 ischosung =(boolean) exist_cho.get("isfind");
+				    		        	 if(ischosung) {
+				    		        		 logger.info("초성 존재");
+				    		        	       cho=(int) exist_cho.get("index"); 
+				    		        	       jung =(int) exist_jung.get("index"); 				    		  
+				    		        		   sum_Han=(char) ((cho * 21 + jung)*28 +0 +0xAC00); 
+				    		        		   startkor+=Character.toString(sum_Han);
+				    		        		   logger.info("한글 변환 :" + startkor);
+				    		        		   
+				    		        		   //todo:현재 인덱스의 문자의 초성을 찾아야 한다.
+				    		        		   exist_cho = EngToCho(origin[E]);
+				    		        		   skip_cho=true;
+				    		        	 }
+				    		        	 else{
+				    		        		 logger.info("초성 없다");
+				    		        	       jung =(int) exist_jung.get("index"); 
+				    		        	       jong = (int) exist_jong.get("index");
+				    		        		 
+				    		        		 startkor+=""+ arrJungSung[jung]+arrJongSung[jong];
+				    		        		 
+				    		        	 }
+	    		        			 match_conso=1;
+
+	    		        	 }
+	    		        		}
+	    		        		else {
+	    		        			logger.info("다음 단어들도 많지만 현재 모음밖에 없는 상태");
+	    		        			jung =(int) exist_jung.get("index");
+	    		        			logger.info("test : " + Search.substring(start_index , start_index+2));
+	    		        			 exist_jong = spetial_jongCheck(Search.substring(start_index , start_index+2));
+	    		        			 logger.info(" 종성 결과 :" + exist_jong);
+	    		        			 if(exist_jong.get("isfind").equals(false)) {
+	    		        				 
+	    		        				 startkor+=""+ arrJungSung[jung];
+	    		        				 match_conso=0;
+	    		        			 }
+	    		        			 else {
+			    		        	       jung =(int) exist_jung.get("index"); 
+			    		        	       jong = (int) exist_jong.get("index");
+	    		        				 startkor+=""+ arrJungSung[jung]+arrJongSung[jong];
+	    		        				 logger.info("test : " + startkor);
+	    		        				 match_conso=1;
+	    		        			 }
+	    		        					 
+	    		        			
+	    		        		}
+		    		        	//logger.info(" 종성 결과 : " + exist_jong);
+		    		        	E+= match_conso-1;
+		    		        	logger.info("마지막 : " + E);
+	    		        	
+	    		        }
+	    		        }
+	    		        else {//초성 + 중성 or 중성만 존재하는 경우
+	    		        	logger.info("모든 푸르틑 끝났다 글자 조합 시작");
+	    		        	Eng+=Search;
+	    		        	boolean ischo=false;
+	    		        	ischo= (boolean) exist_cho.get("isfind");
+	    		        	if(ischo) {
+	    		        		logger.info("초성 존재");
+	    		        		
+	    		        	       cho=(int) exist_cho.get("index"); 
+	    		        	       jung =(int) exist_jung.get("index"); 
+	    		        		   sum_Han=(char) ((cho * 21 + jung)*28 +jong +0xAC00); 
+	    		        		   startkor+=Character.toString(sum_Han);
+	    		        		   logger.info("한글 변환 :" + startkor);
+	    		        	}
+	    		        	else {
+	    		        		logger.info("초성 없다 중성만 존재 :" + exist_jung);
+	    		        		jung = (int) exist_jung.get("index");
+	    		        		logger.info("jung : " + jung);
+	    		        		startkor+= "" + arrJungSung[jung];
+	    		        		logger.info("초성이 없이 중성만 존재한다는데 음:" + startkor);
+	    		        	}
+	    		        }
+
+	    	}
+	    	
+	    	
+	    }
+		data.put("code", 200);
+		data.put("msg", "empty");
+		data.put("data", "null");
+		
+		return data;
+		
+	}
+	
+
+	public Map<String, Object> spetial_jongCheck(String content) {
+		logger.info("넘어오는 데이터 : " + content);
+		int values=0;
+    	String[] transfer;
+    	boolean find= false;
+    	transfer = content.split("");
+    	int len = content.length(), extend=0;
+    	Map<String, Object> result= new HashMap<String, Object>();
+    	if(len == 2) {//길이가 2인 경우
+            for (int i = Math.min(2, len); i > 0; i--) {
+
+                String sub = content.substring(0, i);
+                if (CONSONANT_MAP.containsKey(sub)) {
+                	if(i ==2) {
+                		extend =i;
+                    	String target = CONSONANT_MAP.get(sub).toString();
+                    	values=findjong(target.charAt(0));
+                    	find= true;
+                    	break;
+                	}
+                	else if(i ==1) {
+                		extend =i;
+                    	String target = CONSONANT_MAP.get(sub).toString();
+                    	values=findjong(target.charAt(0));
+                    	find= true;
+                    	break;
+                	}
+
+                }
+            }
+    	}
+    	else {//길이가 1일 경우
+                 String sub = content.substring(0);
+                 if (CONSONANT_MAP.containsKey(sub)) {
+                 		extend =1;
+                     	String target = CONSONANT_MAP.get(sub).toString();
+                     	values=findjong(target.charAt(0));
+                     	find= true;
+                 }
+             
+    	}
+
+
+		result.put("index", values);
+		result.put("isfind", find);
+		result.put("extend", extend);
+		
+        return result; 
+	}
+    	
+	
+	public Map<String, Object> Spetial_JungCheck(String content) {
+		/*
+		int values=0;
+    	String[] transfer;
+    	boolean find= false;
+    	transfer = content.split("");
+    	int len = content.length(), extend=0;
+    	Map<String, Object> result= new HashMap<String, Object>();
+        for (int i = Math.min(3, len); i > 0; i--) {
+            String sub = content.substring(0, i);
+            if (VOWEL_MAP.containsKey(sub)) {
+            	if(i ==3) {
+            		extend =i;
+                	String target = VOWEL_MAP.get(sub).toString();
+                	values=findjung(target.charAt(0));
+                	find= true;
+                	break;
+            	}
+            	else if(i ==2) {
+            		extend =i;
+                	String target = VOWEL_MAP.get(sub).toString();
+                	values=findjung(target.charAt(0));
+                	find= true;
+                	break;
+            	}
+            	else if(i ==1) {
+            		
+            		extend =i;
+                	String target = VOWEL_MAP.get(sub).toString();
+                	values=findjung(target.charAt(0));
+                	find= true;
+                	break;
+            	}
+
+            }
+        }
+        */
+	    int values = 0;
+	    boolean find = false;
+	    int len = content.length(), extend = 0;
+	    Map<String, Object> result = new HashMap<>();
+
+	    for (int i = Math.min(3, len); i > 0; i--) {
+	        String sub = content.substring(0, i);
+	        if (VOWEL_MAP.containsKey(sub)) {
+	            extend = i;
+	            String target = VOWEL_MAP.get(sub);
+	            values = findjung(target.charAt(0));
+	            find = true;
+	            break;
+	        }
+	    }
+		result.put("index", values);
+		result.put("isfind", find);
+		result.put("extend", extend);
+		logger.info(" 최종 결과 : " + result);
+        return result; 
+		}
+	
+	public Map<String, Object> EngToCho(String Eng) {
+		int values=0;
+		boolean find= false;
+		Map<String, Object> result= new HashMap<String, Object>();
+		String cho_lower = Eng.toLowerCase();
+
+		if (cho_lower.equals("i") || cho_lower.equals("e") || cho_lower.equals("y") || cho_lower.equals("a")) {
+		    result.put("index", 11); // 'ㅇ'의 인덱스
+		    result.put("isfind", false); // 실제 초성 리스트에는 없으니까 false 그대로
+		    return result;
+		}
+		for(int i=0; i<arrChoSungEng.length; i++ ) {
+			if(Eng.equals(arrChoSungEng[i])) {
+				find=true;
+				values=i;
+				break;
+			}
+			else continue;
+		}
+	    if (!find) {
+	        String lower = Eng.toLowerCase();
+	        for (int i = 0; i < arrChoSungEng.length; i++) {
+	            if (lower.equals(arrChoSungEng[i])) {
+	                find = true;
+	                values = i;
+	                break;
+	            }
+	        }
+	    }
+		
+		result.put("index", values);
+		result.put("isfind", find);
+		return result;
+	}
+	
+	public int EngToJung(String Eng) {
+		int values=0;
+		logger.info("eng :" + Eng);
+		for(int i=0; i<arrJungSungEng.length; i++ ) {
+			
+			if(Eng.equals(arrJungSungEng[i])) {
+			logger.info("1");
+				values=i;
+				break;
+			}
+			else continue;
+		}
+		
+		return values;
+	}
+	
+	public int EngToJong(String Eng) {
+		int values=0;
+		for(int i=0; i<arrJongSungEng.length; i++ ) {
+			if(Eng.equals(arrJongSungEng[i])) {
+				values=i;
+				break;
+			}
+			else continue;
+		}
+		
+		return values;
+	}
+	
+
+}

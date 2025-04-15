@@ -110,7 +110,6 @@ public class Person_Service {
 			"lt", "lp", "lh", "m", "b", "bs", "s", "ss", "ng", "j", "ch", "c", "t", "p", "h" };
 	
 	private static final Map<String, String> VOWEL_MAP = new HashMap<>();
-	private static final Map<String, String> CONSONANT_MAP = new HashMap<>();
 	
 	 static {//중성 	 	
 	        VOWEL_MAP.put("wae", "ㅙ");
@@ -133,7 +132,7 @@ public class Person_Service {
 	        VOWEL_MAP.put("i", "ㅣ");
 	        VOWEL_MAP.put("ya", "ㅑ");
 	    }
-	 
+private static final Map<String, String> CONSONANT_MAP = new HashMap<>();	 
 	 static { // 종성(받침)
 		    CONSONANT_MAP.put("", "");       // 받침 없음
 		    CONSONANT_MAP.put("k", "ㄱ");
@@ -164,6 +163,24 @@ public class Person_Service {
 		    CONSONANT_MAP.put("p", "ㅍ");
 		    CONSONANT_MAP.put("h", "ㅎ");
 		}
+	 
+	 Map<Character, Character> alphabetToCho = Map.ofEntries(
+			    Map.entry('r', 'ㄱ'), Map.entry('R', 'ㄱ'),
+			    Map.entry('s', 'ㄴ'), Map.entry('S', 'ㄴ'),
+			    Map.entry('e', 'ㄷ'), Map.entry('E', 'ㄷ'),
+			    Map.entry('f', 'ㄹ'), Map.entry('F', 'ㄹ'),
+			    Map.entry('a', 'ㅁ'), Map.entry('A', 'ㅁ'),
+			    Map.entry('q', 'ㅂ'), Map.entry('Q', 'ㅂ'),
+			    Map.entry('t', 'ㅅ'), Map.entry('T', 'ㅅ'),
+			    Map.entry('d', 'ㅇ'), Map.entry('D', 'ㅇ'),
+			    Map.entry('w', 'ㅈ'), Map.entry('W', 'ㅈ'),
+			    Map.entry('c', 'ㅊ'), Map.entry('C', 'ㅊ'),
+			    Map.entry('z', 'ㅋ'), Map.entry('Z', 'ㅋ'),
+			    Map.entry('x', 'ㅌ'), Map.entry('X', 'ㅌ'),
+			    Map.entry('v', 'ㅍ'), Map.entry('V', 'ㅍ'),
+			    Map.entry('g', 'ㅎ'), Map.entry('G', 'ㅎ'),
+			    Map.entry('h', 'ㅎ'), Map.entry('H', 'ㅎ') // 여기가 핵심
+			);
 
 
 
@@ -1022,24 +1039,49 @@ public class Person_Service {
 	    	origin = Search.split("");
 	        boolean skip_cho=false;
 	    	for(int E= 0; E < origin.length; E++) {
-	    		logger.info("E :" + E);
 	    		logger.info("영어 입력 : " + origin[E]);
 		    		if(origin[E].equals("g")) {
 		    			exist_cho.put("index", 0);
 		    			exist_cho.put("isfind", true);
 		    		}
 		    		else {
+		    			String cho_lower = origin[E].toLowerCase();
+
+		    			if (cho_lower.equals("i") && E == 0) {
+		    				startkor+="이";
+		    				Eng+=origin[E];
+		    				E++;
+                            continue;
+		    			}
+		    			else if(cho_lower.equals("y") && E == 0) {
+		    				startkor+="유";
+		    				Eng+=origin[E];
+		    				E++;
+                            continue;
+		    			}
+		    			else if(cho_lower.equals("y") && E == 0 && origin.length >1 && 
+		    					origin[E+1].equalsIgnoreCase("o")) {
+		    				startkor+="에";
+		    				Eng+=origin[E];
+		    				E++;
+                            continue;
+		    			}
 			    		
 			    		if(!skip_cho) {
 			    			exist_cho = EngToCho(origin[E]);
 			    			
 			    		}
-			    		logger.info("초성 검색 : " + exist_cho);
+			    		logger.info("초성 검색 : " + origin[E]);
 		    		}
 
-	    			if(E < origin.length-1 && exist_cho.get("isfind").equals(true)) E+=1;
+	    			if(E < origin.length-1 && exist_cho.get("isfind").equals(true)) {
+	    				logger.info("다음으로 넘어가져 초성 => 중성");
+	    				Eng+= origin[E];
+	    				E+=1; //다음 단어찾기위해 E값 증가
+	    			}
+	    				
 	    			if(E == origin.length-1 && origin.length ==1) {
-	    				logger.info("한 글자인 경우");
+
 	    				cho=(int) exist_cho.get("index"); 
 	    				startkor+=arrChoSung[cho];
 	    				Eng+=origin[E];
@@ -1078,15 +1120,41 @@ public class Person_Service {
     					if(cnt ==1) startkor+= "" + arrChoSung[cho] +arrChoSung[second];
 	    				while(!isfinish) {
 	    					logger.info("같은 문자들 있는지 확인 찾는 방법은 바로 옆에를 시작으로 돌며 바로 옆에 다른 문자가 있으면 그 즉시 while문은 종료");
-	    					
-	    					if(origin[E] == origin[E+1]) {
-	    						logger.info("옆에 같은 값이 있다");
-	    						
-	    						cnt++;
+	    					logger.info("동일한 문자열 루프 :" + E);
+	    					if(E != origin.length-1) {
+	    						logger.info("마지막 아니다");
+		    					if(origin[E] == origin[E+1]) {
+		    						logger.info("옆에 같은 값이 있다");
+		    						
+		    						cnt++;
+		    					}
+		    					else {
+		    						isfinish= true;
+		    					}
 	    					}
 	    					else {
-	    						isfinish= true;
+	     						 Map<String, Object> Search_Input = new HashMap<String, Object>();
+	       						 List<PersonInfo> Person = new ArrayList<PersonInfo>();
+	       						Search_Input.put("startkor", startkor);
+	       						Search_Input.put("eng", Eng);
+	       						Person = person_mapper.onlychosung(Search_Input);
+	       						
+	    	    		    	if(Person.size() ==0) {
+	    	    		    		logger.info("없다");
+	    	    		    		data.put("code", 200);
+	    	    		    		data.put("msg", "empty");
+	    	    		    		data.put("data", "null");	    		
+	    	    		    	}
+	    	    		    	else {
+	    	    		    		logger.info("있다");
+	    	    		    		data.put("code", 200);
+	    	    		    		data.put("msg", "success");
+	    	    		    		data.put("data", Person);
+	    	    		    	}
+	    	    		    	
+	    	    		    	return data;
 	    					}
+
 	    				}
 	    				exist_cho = EngToCho(origin[E]);
 	    				cho=(int) exist_cho.get("index"); 
@@ -1122,29 +1190,32 @@ public class Person_Service {
 	    			}
 	    			
 	    			int matchLength = 0;
-   				 boolean check = false;
+   				    boolean check = false;
 	    			 if (E + 2 < origin.length && matchLength == 0) {//길이가 3이상 
 	    				 exist_jung = Spetial_JungCheck(Search.substring(E, E + 3));
 	    				 logger.info("3가지 중성 조합 : " + exist_jung);
-	    				 
+	    				 Eng+=origin[E];
+	    				 logger.info("Eng : " + Eng);
 	    				   check =(boolean) exist_jung.get("isfind");
 	    		            if(check) matchLength = (int) exist_jung.get("extend");
+	    		            matchLength+=1;
 	    		            
 	    		        }
 	    			 
-	    			 if (matchLength == 0 && E + 1 < origin.length) {
+	    			 else if (matchLength == 0 && E + 1 < origin.length) { //length ==3
 	    				 exist_jung = Spetial_JungCheck(Search.substring(E, E + 2));
-	    				 logger.info("결과 :" +exist_jung );
-	    				 logger.info("matchLength :" +matchLength );
+                          logger.info("az :" + Search.substring(E, E + 2));
+	    				   Eng+= origin[E];
 	    				   check =(boolean) exist_jung.get("isfind");
 	    				   if(check)  matchLength = (int) exist_jung.get("extend");
-	    		        }
-	    			 else if(matchLength == 0 && E< origin.length) {
-	    				 logger.info("총 길이가 2글자인 경우");
-	    				 exist_jung = Spetial_JungCheck(Search.substring(E));
-	    				 logger.info("결과 :" +exist_jung );
-	    				 logger.info("matchLength :" +matchLength );
+	    				   matchLength+=1;
+	    		           }
+	    			 else if(matchLength == 0 && E< origin.length) { //length ==2
 	    				 
+	    				 logger.info("총 길이가 2글자인 경우 :" +origin[E]);
+	    				 Eng+= origin[E];
+	    				 exist_jung = Spetial_JungCheck(Search.substring(E));
+	    				 check =(boolean)exist_jung.get("isfind"); 
 	    				 if(check) matchLength = (int) exist_jung.get("extend");
 	    				 else {//다음 글자가 없기 때문에 여기서 쿼리 조회까지 처리 해야 한다.
 	    					 Map<String, Object> second_cho= new HashMap<String, Object>();
@@ -1156,19 +1227,22 @@ public class Person_Service {
 	    					 else {
 	    						 second_cho = EngToCho(origin[E]);
 	    					 }
-	    					 
-	    					
+	    					 logger.info("second_cho :" +second_cho);
+	    					 logger.info("2글자 영어 :" +Eng);
 	    					 boolean cho_check=(boolean) second_cho.get("isfind"); 
 	    					 if(cho_check) {
 	    						 logger.info("마지막 글짜 초성으로 확인");
 	    						 int first=(int) exist_cho.get("index");
 	    						 int second =(int) second_cho.get("index");  
-	    						 startkor+="" +arrChoSung[first]+arrChoSung[second];
-	    						 Eng+= origin;
+	    						 char first_chostr =(char) ((first * 21 + 0)*28 +0 +0xAC00);  
+	    						 char second_chostr =(char) ((second * 21 + 0)*28 +0 +0xAC00);
+	    						 startkor = "" + Character.toString(first_chostr) + Character.toString(second_chostr);
+	    						 Eng+= origin[E];
 	    						 Map<String, Object> Search_Input = new HashMap<String, Object>();
 	    						 List<PersonInfo> Person = new ArrayList<PersonInfo>();
 	    						 Search_Input.put("startkor", startkor);
 	    						 Search_Input.put("eng", Eng);
+	    						 logger.info("조합 결과 :" +Search_Input );
 	    						 Person = person_mapper.onlychosung(Search_Input);
 	    						 logger.info("초성만 검색 : " + Person);
 	    						 
@@ -1192,8 +1266,11 @@ public class Person_Service {
 	    			 }
 
 	    			 E += matchLength; // 2
+	    			 logger.info("E :" + E);
+	    			 logger.info("eng :" + Eng);
 	    		        if(origin.length-1 > E-1) {//중성 값을 찾은 경우 2
 	    		        	logger.info("마지막 받침을 찾자");
+	    		        	Eng+=origin[E];
 	    		        	int match_conso=0;
 	    		        	 int start_index=E;
 	    		        	 logger.info("시작 인덱스 : " + start_index);
@@ -1207,7 +1284,7 @@ public class Person_Service {
 	    		        		 else {
 	    		        			 exist_jong = spetial_jongCheck(Search.substring(start_index));
 	    		        		 }
-	    		        		 
+	    		        		 logger.info("뭐야 :" + exist_jong);
 		    		        	 check =(boolean) exist_jong.get("isfind");
 		    		        	 if(check) match_conso = (int) exist_jong.get("extend");
 		    		        	 
@@ -1217,18 +1294,55 @@ public class Person_Service {
 		    		        		 logger.info("초성 존재");
 		    		        		 List<PersonInfo> Person = new ArrayList<PersonInfo>();
 		    		        		 Map<String, Object> Search_Input = new HashMap<String, Object>();
+		    		        		 boolean jung_check = (boolean)exist_jung.get("isfind");
 		    		        	       cho=(int) exist_cho.get("index"); 
 		    		        	       jung =(int) exist_jung.get("index"); 
 		    		        	       jong = (int) exist_jong.get("index");
+		    		        	       logger.info("check :" + check);
+		    		        	       logger.info("jung_check :" + jung_check);
+		    		        	       
 		    		        		   sum_Han=(char) ((cho * 21 + jung)*28 +jong +0xAC00); 
 		    		        		   startkor+=Character.toString(sum_Han);
-		    		        		   logger.info("한글 변환 :" + startkor);
-		    		        		   Eng += origin;
-		    		        		   Search_Input.put("startkor", Search_Input);
+		    		        		   if(!check && !jung_check) {
+			    		        		   String Eng_ignore = origin[E].toLowerCase();
+			    		        		   if(Eng_ignore.equals("z") ) {
+			    		        			   startkor+="즈";
+			    		        		   }
+			    		        		   else {
+			    		        			   Map<String, Object> last_cho = new HashMap<>();
+			    		        			   last_cho = EngToCho(origin[E]);
+			    		        			   boolean existcho= (boolean)last_cho.get("isfind");
+			    		        			   //if(existcho) {
+			    		        				   int chosung = (int)last_cho.get("index");
+			    		        				   sum_Han=(char) ((chosung * 21 + 0)*28 +jong +0xAC00); 
+			    		        				   startkor+=Character.toString(sum_Han);
+			    		        			   //}
+			    		        			   
+			    		        		   }
+		    		        		   }
+
+		    		        		   
+		    		        		   logger.info("영어 변환 :" + Eng);
+		    		        		   Search_Input.put("startkor", startkor);
 		    		        		   Search_Input.put("eng", Eng);
+		    		        		   logger.info("Search_Input : " + Search_Input);
 		    		        		   
 		    		        		   Person = person_mapper.cp_word(Search_Input);
 		    		        		   logger.info("완벽한 단어 검색 : "+ Person);
+			    						 if(Person.size() ==0) {
+			    		    		    		logger.info("없다");
+			    		    		    		data.put("code", 200);
+			    		    		    		data.put("msg", "empty");
+			    		    		    		data.put("data", "null");	    		
+			    		    		    	}
+			    		    		    	else {
+			    		    		    		logger.info("있다");
+			    		    		    		data.put("code", 200);
+			    		    		    		data.put("msg", "success");
+			    		    		    		data.put("data", Person);
+			    		    		    	}
+			    		    		    	
+			    		    		    	return data;
 		    		        		   
 		    		        	 }
 		    		        	 else{
@@ -1238,11 +1352,12 @@ public class Person_Service {
 		    		        	       if(jong > 0) {
 		    		        	    	   logger.info("맏침 존재");
 		    		        	    	   startkor+=""+arrJungSung[jung]+arrJongSung[jong]; //초성으로 찾아야 한다.
-		    		        	    	   Eng+=origin;
+		    		        	    	   Eng+=origin[E];
 		  	    						 Map<String, Object> Search_Input = new HashMap<String, Object>();
 			    						 List<PersonInfo> Person = new ArrayList<PersonInfo>();
 			    						 Search_Input.put("startkor", startkor);
 			    						 Search_Input.put("eng", Eng);
+			    						 
 			    						 Person = person_mapper.SearchInitial(Search_Input);
 			    						 
 			    						 if(Person.size() ==0) {
@@ -1263,11 +1378,12 @@ public class Person_Service {
 		    		        	       }
 		    		        	       else {
 		    		        	    	   startkor+=""+arrJungSung[jung]; //묵음만 존재
-		    		        	    	   Eng+=origin;
+		    		        	    	   Eng+=origin[E];
 		  	    						 Map<String, Object> Search_Input = new HashMap<String, Object>();
 			    						 List<PersonInfo> Person = new ArrayList<PersonInfo>();
 			    						 Search_Input.put("startkor", startkor);
 			    						 Search_Input.put("eng", Eng);
+			    						 logger.info("결과 :" + Search_Input);
 			    						 Person =person_mapper.onlyjung(Search_Input);
 			    						 
 			    						 if(Person.size() ==0) {
@@ -1307,6 +1423,8 @@ public class Person_Service {
 			    		        		 match_conso = (int) exist_jong.get("extend");
 			    		        		 boolean ischosung=false;
 				    		        	 ischosung =(boolean) exist_cho.get("isfind");
+			    		        		   logger.info("한글 변환 :" + startkor);
+			    		        		   logger.info("영어 :" + Eng);
 				    		        	 if(ischosung) {
 				    		        		 logger.info("초성 존재");
 				    		        	       cho=(int) exist_cho.get("index"); 
@@ -1315,6 +1433,7 @@ public class Person_Service {
 				    		        		   sum_Han=(char) ((cho * 21 + jung)*28 +jong +0xAC00); 
 				    		        		   startkor+=Character.toString(sum_Han);
 				    		        		   logger.info("한글 변환 :" + startkor);
+				    		        		   logger.info("영어 :" + Eng);
 				    		        	 }
 				    		        	 else{
 				    		        		 logger.info("초성 없다");
@@ -1380,12 +1499,19 @@ public class Person_Service {
 		    		        	//logger.info(" 종성 결과 : " + exist_jong);
 		    		        	E+= match_conso-1;
 		    		        	logger.info("마지막 : " + E);
+		    		        	jung=0;
+		    		        	jong=0;
+		    		        	cho=0;
 	    		        	
 	    		        }
 	    		        }
 	    		        else {//초성 + 중성 or 중성만 존재하는 경우
-	    		        	logger.info("모든 푸르틑 끝났다 글자 조합 시작");
-	    		        	Eng+=Search;
+	    		        	
+	    		        	logger.info("모든 푸르틑 끝났다 글자 조합 시작 : ");
+ 		        		   logger.info("한글 변환 :" + startkor);
+ 		        		   logger.info("영어 :" + Eng);
+ 		        		   if(Eng.length() !=origin.length ) Eng+=origin[E-1];
+	    		        	
 	    		        	boolean ischo=false;
 	    		        	ischo= (boolean) exist_cho.get("isfind");
 	    		        	if(ischo) {
@@ -1396,6 +1522,7 @@ public class Person_Service {
 	    		        		   sum_Han=(char) ((cho * 21 + jung)*28 +jong +0xAC00); 
 	    		        		   startkor+=Character.toString(sum_Han);
 	    		        		   logger.info("한글 변환 :" + startkor);
+	    		        		   logger.info("영어 :" + Eng);
 	    		        	}
 	    		        	else {
 	    		        		logger.info("초성 없다 중성만 존재 :" + exist_jung);
@@ -1403,6 +1530,7 @@ public class Person_Service {
 	    		        		logger.info("jung : " + jung);
 	    		        		startkor+= "" + arrJungSung[jung];
 	    		        		logger.info("초성이 없이 중성만 존재한다는데 음:" + startkor);
+	    		        		logger.info("초성이 없이 영어:" + Eng);
 	    		        	}
 	    		        }
 
@@ -1426,12 +1554,16 @@ public class Person_Service {
     	boolean find= false;
     	transfer = content.split("");
     	int len = content.length(), extend=0;
+    	String Eng_Ignore =content.toLowerCase(); 
     	Map<String, Object> result= new HashMap<String, Object>();
     	if(len == 2) {//길이가 2인 경우
+    		 logger.info("aaaa :" + Eng_Ignore);
             for (int i = Math.min(2, len); i > 0; i--) {
-
-                String sub = content.substring(0, i);
+                
+                String sub = Eng_Ignore.substring(0, i);
+                logger.info("aaaaa111 :" + sub);
                 if (CONSONANT_MAP.containsKey(sub)) {
+                	
                 	if(i ==2) {
                 		extend =i;
                     	String target = CONSONANT_MAP.get(sub).toString();
@@ -1451,7 +1583,7 @@ public class Person_Service {
             }
     	}
     	else {//길이가 1일 경우
-                 String sub = content.substring(0);
+                 String sub = Eng_Ignore.substring(0);
                  if (CONSONANT_MAP.containsKey(sub)) {
                  		extend =1;
                      	String target = CONSONANT_MAP.get(sub).toString();
@@ -1461,16 +1593,17 @@ public class Person_Service {
              
     	}
 
-
+      
 		result.put("index", values);
 		result.put("isfind", find);
 		result.put("extend", extend);
-		
+		 logger.info("결과 :" + result);
         return result; 
 	}
     	
 	
 	public Map<String, Object> Spetial_JungCheck(String content) {
+		/*
 		int values=0;
     	String[] transfer;
     	boolean find= false;
@@ -1505,6 +1638,33 @@ public class Person_Service {
 
             }
         }
+        */
+	    int values = 0;
+	    boolean find = false;
+	    int len = content.length(), extend = 0;
+	    Map<String, Object> result = new HashMap<>();
+	    String Eng_Ignore= content.toLowerCase();
+	    if (content.equalsIgnoreCase("y")) {
+	        extend = 1;
+	        values = findjung('ㅕ'); // 또는 'ㅣ'도 가능
+	        find = true;
+			result.put("index", values);
+			result.put("isfind", find);
+			result.put("extend", extend);
+			
+	        return result;
+	    }
+
+	    for (int i = Math.min(3, len); i > 0; i--) {
+	        String sub = Eng_Ignore.substring(0, i);
+	        if (VOWEL_MAP.containsKey(sub)) {
+	            extend = i;
+	            String target = VOWEL_MAP.get(sub);
+	            values = findjung(target.charAt(0));
+	            find = true;
+	            break;
+	        }
+	    }
 		result.put("index", values);
 		result.put("isfind", find);
 		result.put("extend", extend);
@@ -1516,6 +1676,7 @@ public class Person_Service {
 		int values=0;
 		boolean find= false;
 		Map<String, Object> result= new HashMap<String, Object>();
+
 		for(int i=0; i<arrChoSungEng.length; i++ ) {
 			if(Eng.equals(arrChoSungEng[i])) {
 				find=true;
@@ -1524,6 +1685,16 @@ public class Person_Service {
 			}
 			else continue;
 		}
+	    if (!find) {
+	        String lower = Eng.toLowerCase();
+	        for (int i = 0; i < arrChoSungEng.length; i++) {
+	            if (lower.equals(arrChoSungEng[i])) {
+	                find = true;
+	                values = i;
+	                break;
+	            }
+	        }
+	    }
 		
 		result.put("index", values);
 		result.put("isfind", find);
