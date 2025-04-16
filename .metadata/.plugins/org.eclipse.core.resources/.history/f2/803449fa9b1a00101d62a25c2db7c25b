@@ -1512,8 +1512,7 @@ private static final Map<String, String> CONSONANT_MAP = new HashMap<>();
 	    		        }
 	    		        }
 	    		        else {//초성 + 중성 or 중성만 존재하는 경우
-	    		        	List<PersonInfo> Person = new ArrayList<PersonInfo>();
-	    		        	 Map<String, Object> Search_Input = new HashMap<String, Object>();
+	    		        	
 	    		        	logger.info("모든 푸르틑 끝났다 글자 조합 시작 : ");
  		        		   logger.info("한글 변환 :" + startkor);
  		        		   logger.info("영어 :" + Eng);
@@ -1530,24 +1529,6 @@ private static final Map<String, String> CONSONANT_MAP = new HashMap<>();
 	    		        		   startkor+=Character.toString(sum_Han);
 	    		        		   logger.info("한글 변환 :" + startkor);
 	    		        		   logger.info("영어 :" + Eng);
-		    						 Search_Input.put("startkor", startkor);
-		    						 Search_Input.put("eng", Eng);
-		    						 Person =person_mapper.onlyjung(Search_Input);
-		    						 
-		    						 if(Person.size() ==0) {
-		    		    		    		logger.info("없다");
-		    		    		    		data.put("code", 200);
-		    		    		    		data.put("msg", "empty");
-		    		    		    		data.put("data", "null");	    		
-		    		    		    	}
-		    		    		    	else {
-		    		    		    		logger.info("있다");
-		    		    		    		data.put("code", 200);
-		    		    		    		data.put("msg", "success");
-		    		    		    		data.put("data", Person);
-		    		    		    	}
-		    		    		    	
-		    		    		    	return data;
 	    		        	}
 	    		        	else {
 	    		        		logger.info("초성 없다 중성만 존재 :" + exist_jung);
@@ -1556,22 +1537,6 @@ private static final Map<String, String> CONSONANT_MAP = new HashMap<>();
 	    		        		startkor+= "" + arrJungSung[jung];
 	    		        		logger.info("초성이 없이 중성만 존재한다는데 음:" + startkor);
 	    		        		logger.info("초성이 없이 영어:" + Eng);
-	    						 Search_Input.put("startkor", startkor);
-	    						 Search_Input.put("eng", Eng);
-	    						 Person =person_mapper.onlyjung(Search_Input);
-	    						 
-	    						 if(Person.size() ==0) {
-	    		    		    		logger.info("없다");
-	    		    		    		data.put("code", 200);
-	    		    		    		data.put("msg", "empty");
-	    		    		    		data.put("data", "null");	    		
-	    		    		    	}
-	    		    		    	else {
-	    		    		    		logger.info("있다");
-	    		    		    		data.put("code", 200);
-	    		    		    		data.put("msg", "success");
-	    		    		    		data.put("data", Person);
-	    		    		    	}
 	    		        	}
 	    		        }
 
