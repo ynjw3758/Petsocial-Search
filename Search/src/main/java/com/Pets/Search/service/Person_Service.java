@@ -268,7 +268,7 @@ private static final Map<String, String> CONSONANT_MAP = new HashMap<>();
 		}
 		return values;
 	}
-	
+	//여기가 메인 로직 함수
 	public Map<String, Object>Search_MatFollower(String nickname, String Id){
 		Map<String ,Object> data = new HashMap<String, Object>();
 		Map<String, Object> insert_data = new HashMap<String ,Object>();
@@ -821,6 +821,7 @@ private static final Map<String, String> CONSONANT_MAP = new HashMap<>();
         		   }
         		   logger.info("영어 변환 :" + eng);
         		   
+        		   
         	   }
         	   else if(HangulEditor.isConsonant(Search.charAt(i)) &&
          	        HangulEditor.isVowels(Search.charAt(i+1))) {
@@ -875,6 +876,7 @@ private static final Map<String, String> CONSONANT_MAP = new HashMap<>();
         	   }
            }
            if(endkor =="" && isConso == false && isVowe == false) {
+        	   logger.info("자음+모음 검색 : " +startkor );
         	   if(second_eng.equals("")) {
             	   Search_word.put("startkor",startkor);
             	   Search_word.put("eng", eng);     
@@ -927,7 +929,7 @@ private static final Map<String, String> CONSONANT_MAP = new HashMap<>();
            }
            else {
         	   if(isCpword == false && isConso == true && isVowe== false) {
-        		   
+        		   logger.info("자음만 존재하는 경우 :" + startkor);
         		   
         		   if(second_eng.equals("")) {
                 	   Search_word.put("startkor",startkor);
@@ -958,7 +960,7 @@ private static final Map<String, String> CONSONANT_MAP = new HashMap<>();
        	    	return data;
         	   }
         	   else if(isCpword == false && isConso == false && isVowe== true){
-
+        		   logger.info("모음만 존재하는 경우 :" + startkor);
         		   Search_word.put("startkor",startkor);
         		   Search_word.put("eng", eng);
         		   person_list =person_mapper.onlyjung(Search_word);

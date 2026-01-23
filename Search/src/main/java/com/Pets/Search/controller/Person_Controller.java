@@ -12,12 +12,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.Pets.Search.dto.PersonInfo;
+import com.Pets.Search.dto.request.person.Word;
 import com.Pets.Search.service.Person_Service;
+
+import jakarta.validation.Valid;
 
 @CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*")
 @RestController
@@ -47,10 +51,11 @@ public class Person_Controller {
 	
 
 	@GetMapping("/Search/Person")
-	public ResponseEntity<List<PersonInfo>>getPerson(@RequestParam("Word") String Search){
+	public ResponseEntity<List<PersonInfo>>getPerson(@Valid @RequestBody Word  Search){
 		Map<String, Object> response = new HashMap<String, Object>();
 		List<PersonInfo> data = new ArrayList<PersonInfo>();
-		response =Person.Search_Person(Search); 
+		logger.info("word :" + Search.getWord());
+		response =Person.Search_Person(Search.getWord()); 
 		logger.info("최종 결과 :" + response);
 		if(!response.get("data").equals("null") && response.get("code").equals(200)) {
 			data =(List<PersonInfo>) response.get("data"); 

@@ -38,9 +38,21 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'io.github.vaneproject:hanguleditor:1.0.0'
-implementation group: 'org.springframework.boot', name: 'spring-boot-starter-validation', version: '2.5.4'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-validation', version: '2.5.4'
+    implementation 'jakarta.validation:jakarta.validation-api:3.0.2'
+	implementation 'org.hibernate.validator:hibernate-validator'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+tasks.register('prodTest', Test) {
+    useJUnitPlatform()
+    description = 'Search Service Runs the tests with prod profile'
+    group = 'verification'
+
+    systemProperty 'spring.profiles.active', 'prod'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
 }
